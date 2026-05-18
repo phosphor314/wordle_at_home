@@ -9,6 +9,8 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
+include(FetchContent)
+
 project ("wordle_at_home")
 
 #set(CMAKE_BUILD_TYPE Debug)
@@ -21,6 +23,19 @@ set (FullOutputDir "${CMAKE_SOURCE_DIR}/out/${CMAKE_SYSTEM_NAME}${OSBitness}/${C
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${FullOutputDir}/static libs")
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "${FullOutputDir}")
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${FullOutputDir}")
+
+set(SFML_VERSION "3.0.1")
+
+FetchContent_Declare(
+    sfml
+    GIT_REPOSITORY "https://github.com/SFML/SFML.git"
+    GIT_TAG        "${SFML_VERSION}"
+)
+
+FetchContent_GetProperties(sfml)
+if(NOT sfml_POPULATED)
+    FetchContent_MakeAvailable(sfml)
+endif()
 
 # Include sub-projects.
 add_subdirectory ("wordle_at_home")
