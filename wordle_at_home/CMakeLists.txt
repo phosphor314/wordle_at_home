@@ -1,0 +1,1 @@
+add_executable(wordle_at_home "main.cpp")
