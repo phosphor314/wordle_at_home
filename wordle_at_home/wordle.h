@@ -24,7 +24,7 @@ private:
 	std::mt19937_64 randomState;
 
 	std::vector<std::wstring> words;
-	std::wstring currentWord;
+	std::wstring currentWord = L"";
 	std::wstring currentUserInput;
 	std::vector<std::wstring> userInputHistory;
 	

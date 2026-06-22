@@ -7,6 +7,9 @@ Wordle::Wordle()
 {
 	monospace = sf::Font("SpaceMono-Regular.ttf");
 	
+	std::random_device rd;
+	randomState = std::mt19937_64(rd());
+	
 	std::basic_ifstream<wchar_t> german;
 	german.open("german.txt", std::ios_base::ate);
 	std::vector<wchar_t> content;
@@ -39,8 +42,16 @@ void Wordle::update(){
     
     if (currentUserInput.size() == currentWord.size()){
     	userInputHistory.push_back(currentUserInput);
+    	std::vector<LetterStates> ls = getLetterStates(currentUserInput);
     	currentUserInput = L"";
-    	if (currentUserInput == currentWord){
+    	bool done = true;
+    	for (LetterStates l : ls){
+    		if (l != AT_RIGHT_POSITION){
+    			done = false;
+    			break;
+    		}
+    	}
+    	if (done){
     		// YAY
     		exit(0);
     	}
@@ -48,6 +59,26 @@ void Wordle::update(){
     		exit(1);
     	}
     }
+}
+
+std::vector<LetterStates> Wordle::getLetterStates(std::wstring userInput){
+	std::vector<LetterStates> out;
+	out.resize(currentWord.size());
+	assert(userInput.size() == currentWord.size());
+	for (int i=0; i < currentWord.size(); ++i){
+	    if (userInput[i] == currentWord[i]){
+	        out[i] = AT_RIGHT_POSITION;
+	    }
+	    else {
+	   		for (int j=0; j < currentWord.size(); ++j){
+	   		    if (currentWord[j] == userInput[i]){
+	   		        out[i] = EXISTS;
+	   		    }
+	   		}
+	    }
+	}
+	
+	return out;
 }
 
 void Wordle::enterChar(wchar_t c){

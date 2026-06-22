@@ -33,5 +33,7 @@ int main(){
 		window.clear();
 		game.render(&window);		
 		window.display();
+		
+		game.update();
 	}
 }
