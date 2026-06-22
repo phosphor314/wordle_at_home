@@ -1,9 +1,12 @@
 #include "wordle.h"
 #include <fstream>
+#include <iostream>
 
 
 Wordle::Wordle()
 {
+	monospace = sf::Font("SpaceMono-Regular.ttf");
+	
 	std::basic_ifstream<wchar_t> german;
 	german.open("german.txt", std::ios_base::ate);
 	std::vector<wchar_t> content;
@@ -15,15 +18,15 @@ Wordle::Wordle()
 	for (wchar_t c : content) {
 		if (c == '\n') { 
 			words.push_back(zeichen);
-			zeichen = '';
+			zeichen = L"";
 		}
 		else {
 			zeichen += c; 
 		}
 	}
-	if (zeichen != '') {
+	if (zeichen != L"") {
 		words.push_back(zeichen);
-		zeichen = '';
+		zeichen = L"";
 	}
 }
 
@@ -31,10 +34,12 @@ void Wordle::update(){
     if (currentWord == L""){
     	std::uniform_int_distribution<size_t> randInd(0, words.size());
     	currentWord = words[randInd(randomState)];
+    	std::wcout << currentWord << L"\n";
     }
     
     if (currentUserInput.size() == currentWord.size()){
     	userInputHistory.push_back(currentUserInput);
+    	currentUserInput = L"";
     	if (currentUserInput == currentWord){
     		// YAY
     		exit(0);
