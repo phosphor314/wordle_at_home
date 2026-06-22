@@ -13,6 +13,8 @@ int main(){
 	sf::RenderWindow window = sf::RenderWindow(videoMode, "wordle at home");
 	std::optional<sf::Event> windowEvent;
 	
+	Wordle game;
+	
 	window.setFramerateLimit(60);
 	
 	while (window.isOpen()) {
@@ -21,10 +23,15 @@ int main(){
 			if (windowEvent.value().is<sf::Event::Closed>()) {
 				window.close();
 			}
+			if (windowEvent.value().is<sf::Event::TextEntered>()){
+				const sf::Event::TextEntered* keyEv = windowEvent.value().getIf<sf::Event::TextEntered>();
+				game.enterChar(keyEv->unicode);
+			}
 			windowEvent = window.pollEvent();
 		}
 
 		window.clear();
+		game.render(&window);		
 		window.display();
 	}
 }
