@@ -7,8 +7,17 @@ namespace Brot{
 	}
 }
 
+#ifdef _WIN32
+#include <direct.h>
+#define chdir _chdir
+#else
+#define chdir (void)
+#endif
 
 int main(){
+#ifdef _WIN32
+	chdir("../../..");
+#endif
 	sf::VideoMode videoMode = sf::VideoMode(sf::Vector2u{800, 800});
 	sf::RenderWindow window = sf::RenderWindow(videoMode, "wordle at home");
 	std::optional<sf::Event> windowEvent;
