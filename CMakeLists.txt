@@ -13,6 +13,8 @@ include(FetchContent)
 
 project ("wordle_at_home")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
 #set(CMAKE_BUILD_TYPE Debug)
 
 set (OSBitness 32)
