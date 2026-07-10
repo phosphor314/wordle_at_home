@@ -1,2 +1,2 @@
-cmake -S . -B out
-cmake --build out
+cmake -S . -B out/Release
+cmake --build out/Release

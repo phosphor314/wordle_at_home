@@ -10,6 +10,8 @@ int main(){
 #ifdef _WIN32
 	_chdir("../../..");
 #endif
+	std::setlocale(LC_ALL, "");
+
 	sf::VideoMode videoMode = sf::VideoMode(sf::Vector2u{800, 800});
 	sf::RenderWindow window = sf::RenderWindow(videoMode, "wordle at home");
 	std::optional<sf::Event> windowEvent;

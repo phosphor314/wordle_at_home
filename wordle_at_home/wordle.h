@@ -3,6 +3,7 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include <random>
+#include "layout.h"
 
 
 enum LetterStates{
@@ -30,7 +31,15 @@ private:
 	
 	sf::Font monospace;
 	
-	static constexpr int MAX_GUESSES = 6;
+	Layout::Layout layout;
+	
+	static constexpr int MAX_GUESSES = 7;
 	
 	std::vector<LetterStates> getLetterStates(std::wstring userInput);
+	
+	void makeLayout();
+	void loadWords();
+	
+	void makeCharLayoutRow();
+	std::wstring getRandomWord(int length);
 };

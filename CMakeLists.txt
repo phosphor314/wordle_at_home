@@ -15,8 +15,6 @@ project ("wordle_at_home")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-#set(CMAKE_BUILD_TYPE Debug)
-
 set (OSBitness 32)
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
   set (OSBitness 64)
