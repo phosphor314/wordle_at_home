@@ -207,8 +207,7 @@ void Wordle::render(sf::RenderTarget* target){
 
 void Wordle::makeLayout(){
 	layout.subdivideContainer(0, NAN, Layout::LATERAL);
-	layout.subdivideContainer(0, 0.6f);
-	layout.subdivideContainer(0);
+	layout.subdivideContainer(0, 0.8f);
 }
 
 void Wordle::makeCharLayoutRow(){
