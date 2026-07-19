@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 #include <random>
 #include "layout.h"
 
@@ -16,7 +17,7 @@ struct Wordle{
 public:
 	Wordle();
 
-	void enterChar(wchar_t);
+	void receiveInput(const sf::Event&);
 
 	void update();
 	void render(sf::RenderTarget* target);

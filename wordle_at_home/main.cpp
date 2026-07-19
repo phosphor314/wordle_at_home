@@ -10,7 +10,7 @@ int main(){
 #ifdef _WIN32
 	_chdir("../../..");
 #endif
-	std::setlocale(LC_ALL, "");
+	std::setlocale(LC_ALL, "de_CH.iso88591");
 
 	sf::VideoMode videoMode = sf::VideoMode(sf::Vector2u{800, 800});
 	sf::RenderWindow window = sf::RenderWindow(videoMode, "wordle at home");
@@ -26,9 +26,8 @@ int main(){
 			if (windowEvent.value().is<sf::Event::Closed>()) {
 				window.close();
 			}
-			if (windowEvent.value().is<sf::Event::TextEntered>()){
-				const sf::Event::TextEntered* keyEv = windowEvent.value().getIf<sf::Event::TextEntered>();
-				game.enterChar(keyEv->unicode);
+			else {
+				game.receiveInput(windowEvent.value());
 			}
 			windowEvent = window.pollEvent();
 		}

@@ -1,8 +1,10 @@
 #include "wordle.h"
 #include <fstream>
 #include <iostream>
-#include <unordered_map>
 #include <algorithm>
+#include <unordered_set>
+#include <unordered_map>
+#include <list>
 
 
 Wordle::Wordle()
@@ -17,6 +19,20 @@ Wordle::Wordle()
 	makeLayout();
 }
 
+struct Node{
+	std::unordered_map<wchar_t, Node*> children;
+	Node* parent = nullptr;
+	
+	std::wstring traceback() const{
+		if (parent){
+			return parent->traceback() + std::find_if(parent->children.begin(), parent->children.end(), [this](const auto& x){
+				return x.second == this;
+			})->first;
+		}
+		return L"";
+	}
+};
+
 void Wordle::loadWords(){
 	std::wifstream german;
 	german.imbue(std::locale(""));
@@ -26,22 +42,35 @@ void Wordle::loadWords(){
 	german.seekg(0);
 	german.read(content.data(), content.size());
 	
-	std::wstring zeichen;
+	std::list<Node> tree = {{}};
+	
+	Node* current = &tree.front();
+	int newNodeCount = 0;
+	int nodeCount = 0;
+	
 	for (wchar_t c : content) {
-		if (c == L'\n') { 
-			words.push_back(zeichen);
-			zeichen = L"";
+		if (c == L'\n') {
+			if (newNodeCount > 4 || newNodeCount == nodeCount){
+				words.push_back(current->traceback());
+			}
+			current = &tree.front();
+			newNodeCount = 0;
+			nodeCount = 0;
 		}
-		else if (c != L'\r') {
-			zeichen += c; 
+		else {
+			if (!current->children.count(c)){
+				tree.emplace_back();
+				tree.back().parent = current;
+				current->children[c] = &tree.back();
+				++newNodeCount;
+			}
+			++nodeCount;
+			current = current->children[c];
 		}
-	}
-	if (zeichen != L"") {
-		words.push_back(zeichen);
 	}
 	
-	std::sort(words.begin(), words.end(), [](const std::wstring& a, const std::wstring& b){
-		return a.length() < b.length();
+	std::sort(words.begin(), words.end(), [](const auto& a, const auto& b){
+		return a.size() < b.size();
 	});
 }
 
@@ -101,7 +130,7 @@ std::wstring Wordle::getRandomWord(int length){
 			}
 			break;
 		}
-		minInd = minInd;
+		_minInd = minInd;
 		_maxInd = maxInd;
 		while (true){
 			if (words[maxInd].length() > length){
@@ -119,7 +148,6 @@ std::wstring Wordle::getRandomWord(int length){
 			break;
 		}
 	}
-	
 	std::uniform_int_distribution<int> dist(minInd, maxInd);
 	return words[dist(randomState)];
 }
@@ -153,8 +181,18 @@ std::vector<LetterStates> Wordle::getLetterStates(std::wstring userInput){
 	return out;
 }
 
-void Wordle::enterChar(wchar_t c){
-	currentUserInput += std::towupper(c);
+void Wordle::receiveInput(const sf::Event& ev){
+	if (ev.is<sf::Event::TextEntered>()){
+		const sf::Event::TextEntered* tEv = ev.getIf<sf::Event::TextEntered>();
+		if (tEv->unicode > 31){
+			currentUserInput += (wchar_t)tEv->unicode;
+		}
+		else if (tEv->unicode == 8){
+			currentUserInput.resize(std::max(1ul, currentUserInput.size()) - 1);
+		}
+		else {return;}
+		update();
+	}
 }
 
 void Wordle::render(sf::RenderTarget* target){
@@ -215,10 +253,12 @@ void Wordle::makeCharLayoutRow(){
 	float CHAR_TILE_WIDTH = 0.8*WIDTH_PER_CHAR;
 	float CHAR_TILE_PADDING = WIDTH_PER_CHAR - CHAR_TILE_WIDTH;
 	
+	float loffset = 0.5f*(1.0f-currentWord.size()*WIDTH_PER_CHAR);
+	
 	for (int i=0; i < currentWord.size(); ++i){
 		layout.addElement(Layout::Element{
 			2,
-			sf::Vector2f(WIDTH_PER_CHAR*i+CHAR_TILE_PADDING, WIDTH_PER_CHAR*userInputHistory.size()+CHAR_TILE_PADDING),
+			sf::Vector2f(WIDTH_PER_CHAR*i+CHAR_TILE_PADDING+loffset, WIDTH_PER_CHAR*userInputHistory.size()+CHAR_TILE_PADDING),
 			sf::Vector2f(CHAR_TILE_WIDTH, CHAR_TILE_WIDTH)
 		});
 	}
