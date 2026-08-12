@@ -1,5 +1,6 @@
-#include "wordle.h"
+#include "map.h"
 #include <SFML/Graphics.hpp>
+#include "constants.h"
 
 
 #ifdef _WIN32
@@ -16,7 +17,11 @@ int main(){
 	sf::RenderWindow window = sf::RenderWindow(videoMode, "wordle at home");
 	std::optional<sf::Event> windowEvent;
 	
-	Wordle game;
+	Constants constants;
+	
+	LevelMap levelMap(5, constants);
+	Wordle wordle(constants);
+	bool inLevelMap = true;
 	
 	window.setFramerateLimit(60);
 	
@@ -27,15 +32,34 @@ int main(){
 				window.close();
 			}
 			else {
-				game.receiveInput(windowEvent.value());
+				if (inLevelMap){
+					levelMap.receiveInput(windowEvent.value());
+				}
+				else{
+					wordle.receiveInput(windowEvent.value());
+				}
 			}
 			windowEvent = window.pollEvent();
 		}
 
 		window.clear();
-		game.render(&window);		
+		if (inLevelMap){
+			levelMap.render(&window);
+		}
+		else{
+			wordle.render(&window);
+		}
 		window.display();
 		
-		game.update();
+		if (inLevelMap){
+			levelMap.update();
+			if (levelMap.getSelectedLevel(wordle)){
+				inLevelMap = false;
+			}
+		}
+		else{
+			wordle.update();
+			inLevelMap = wordle.getPlayerWon();
+		}
 	}
 }

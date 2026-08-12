@@ -5,6 +5,7 @@
 #include <SFML/Window.hpp>
 #include <random>
 #include "layout.h"
+#include "constants.h"
 
 
 enum LetterStates{
@@ -15,22 +16,26 @@ enum LetterStates{
 
 struct Wordle{
 public:
-	Wordle();
+	Wordle(Constants&);
+	Wordle(Constants&, size_t wordlength);
 
 	void receiveInput(const sf::Event&);
 
 	void update();
 	void render(sf::RenderTarget* target);
 	
+	bool getPlayerWon();
+	
 private:
 	std::mt19937_64 randomState;
 
-	std::vector<std::wstring> words;
 	std::wstring currentWord = L"";
 	std::wstring currentUserInput;
 	std::vector<std::wstring> userInputHistory;
+	bool playerWon = false;
+	size_t wordLength;
 	
-	sf::Font monospace;
+	Constants& constants;
 	
 	Layout::Layout layout;
 	
@@ -39,7 +44,6 @@ private:
 	std::vector<LetterStates> getLetterStates(std::wstring userInput);
 	
 	void makeLayout();
-	void loadWords();
 	
 	void makeCharLayoutRow();
 	std::wstring getRandomWord(int length);
