@@ -13,14 +13,14 @@ LevelMap::LevelMap(size_t length, Constants& c, Player& p) : constants(c), playe
     constexpr size_t MAX_WIDTH = 4;
     constexpr size_t MIN_WIDTH = 1;
     
-    map.push_back({{NONE, {}, 0}});
+    map.push_back({{LocationType::NONE, {}, 0}});
     
     size_t counter = 1;
     for (size_t i=1; i < length; ++i){
         size_t layerWidth = std::uniform_int_distribution(MIN_WIDTH, MAX_WIDTH)(rand);
         map.push_back({});
         for (size_t j=0; j < layerWidth; ++j){
-            map[i].push_back({WORDLE, {}, counter});
+            map[i].push_back({LocationType::WORDLE, {}, counter});
             ++counter;
         }
         std::vector<char> noParent(layerWidth);
@@ -134,7 +134,7 @@ void LevelMap::renderMap(sf::RenderTarget* target){
             }
             
             switch (map[l][n].type){
-                case WORDLE:
+                case LocationType::WORDLE:
                 {
                 	sf::Text text(constants.MONOSPACE_FONT);
                 	text.setString("W");
@@ -177,10 +177,10 @@ void LevelMap::renderMap(sf::RenderTarget* target){
 void LevelMap::renderSelectedTileInfo(sf::RenderTarget* target){
     sf::Text text(constants.MONOSPACE_FONT);
     switch (map[selectedLayer][selectedNode].type){
-        case NONE:
+        case LocationType::NONE:
 			text.setString("Hier ist nichts");
 			break;
-		case WORDLE:
+		case LocationType::WORDLE:
 			text.setString("Wordle, nichts spezielles");
     		break;
     }
