@@ -2,6 +2,7 @@
 
 #include "layout.h"
 #include "constants.h"
+#include "player.h"
 #include <SFML/Graphics.hpp>
 #include "interpolate.hpp"
 #include "wordle.h"
@@ -9,7 +10,7 @@
 
 struct LevelMap{
 public:
-	LevelMap(size_t length, Constants&);
+	LevelMap(size_t length, Constants&, Player&);
 	
 	void render(sf::RenderTarget*);
 	void update();
@@ -43,7 +44,8 @@ private:
 	bool start_level = false;
 	Interpolated<sf::Vector2f, easingFuns::EaseOutExpo> selectRectCentre;
 	
-    Constants& constants;
+	Constants& constants;
+	Player& player;
 	
 	void makeLayout();
 	

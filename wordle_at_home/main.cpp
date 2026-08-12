@@ -18,9 +18,10 @@ int main(){
 	std::optional<sf::Event> windowEvent;
 	
 	Constants constants;
-	
-	LevelMap levelMap(5, constants);
-	Wordle wordle(constants);
+	Player player;
+
+	LevelMap levelMap(5, constants, player);
+	Wordle wordle(constants, player);
 	bool inLevelMap = true;
 	
 	window.setFramerateLimit(60);

@@ -4,15 +4,18 @@
 #include <algorithm>
 #include <unordered_map>
 #include <list>
+#include <cwctype>
 
 
-Wordle::Wordle(Constants& c) : constants(c){}
+Wordle::Wordle(Constants& c, Player& p) : constants(c), player(p) {}
 
-Wordle::Wordle(Constants& c, size_t wordLength) : constants(c)
+Wordle::Wordle(Constants& c, Player& p, size_t wordLength) : constants(c), player(p)
 {	
 	std::random_device rd;
 	randomState = std::mt19937_64(rd());
 	this->wordLength = wordLength;
+	MAX_GUESSES = 6 + player.upgrades.count(ADD_ATTEMPT);
+
 	
 	makeLayout();
 }
@@ -38,6 +41,7 @@ void Wordle::update(){
     	}
     	if (done){
     		playerWon = true;
+			player.money += 10 + 2 * player.upgrades.count(MONEY_END);
     	}
     	else if (userInputHistory.size() == MAX_GUESSES){
     		exit(1);
@@ -91,6 +95,13 @@ std::wstring Wordle::getRandomWord(int length){
 		}
 	}
 	std::uniform_int_distribution<int> dist(minInd, maxInd);
+	if(player.upgrades.count(X_WORD)){
+		std::wstring word;
+		while (!std::any_of(word.begin(), word.end(), [](wchar_t c) {return std::towupper(c) == L'X';})) {
+			word = constants.words[dist(randomState)];
+		}
+		return word;
+	}
 	return constants.words[dist(randomState)];
 }
 
@@ -130,7 +141,7 @@ void Wordle::receiveInput(const sf::Event& ev){
 			currentUserInput += (wchar_t)tEv->unicode;
 		}
 		else if (tEv->unicode == 8){
-			currentUserInput.resize(std::max(1ul, currentUserInput.size()) - 1);
+			currentUserInput.resize(std::max<size_t>(1ul, currentUserInput.size()) - 1);
 		}
 		else {return;}
 		update();
@@ -195,7 +206,7 @@ void Wordle::makeLayout(){
 }
 
 void Wordle::makeCharLayoutRow(){
-	float WIDTH_PER_CHAR = 1.0f/std::max(currentWord.size(), 7ul);
+	float WIDTH_PER_CHAR = 1.0f/std::max<size_t>(currentWord.size(), 7ul);
 	float CHAR_TILE_WIDTH = 0.8*WIDTH_PER_CHAR;
 	float CHAR_TILE_PADDING = WIDTH_PER_CHAR - CHAR_TILE_WIDTH;
 	

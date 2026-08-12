@@ -6,6 +6,7 @@
 #include <random>
 #include "layout.h"
 #include "constants.h"
+#include "player.h"
 
 
 enum LetterStates{
@@ -16,8 +17,8 @@ enum LetterStates{
 
 struct Wordle{
 public:
-	Wordle(Constants&);
-	Wordle(Constants&, size_t wordlength);
+	Wordle(Constants&, Player&);
+	Wordle(Constants&, Player&, size_t wordlength);
 
 	void receiveInput(const sf::Event&);
 
@@ -36,10 +37,11 @@ private:
 	size_t wordLength;
 	
 	Constants& constants;
+	Player& player;
 	
 	Layout::Layout layout;
 	
-	static constexpr int MAX_GUESSES = 7;
+	int MAX_GUESSES = 6;
 	
 	std::vector<LetterStates> getLetterStates(std::wstring userInput);
 	

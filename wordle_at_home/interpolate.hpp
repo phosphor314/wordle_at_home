@@ -35,13 +35,13 @@ namespace easingFuns{
         }
     };
     
-    struct EaseOutElastic{
+    /*struct EaseOutElastic {
         float operator()(float x) const{
             const float c4 = (2 * std::numbers::pi / 3);
 
   			return std::pow(2, -10 * x) * std::sin((x * 10 - 0.75) * c4) + 1;
         }
-    };
+    };*/
     
     struct EasinInOutExpo{
         float operator()(float x) const{

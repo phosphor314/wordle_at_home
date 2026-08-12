@@ -3,7 +3,7 @@
 #include <algorithm>
 
 
-LevelMap::LevelMap(size_t length, Constants& c) : constants(c), selectRectCentre(sf::Vector2f(), 0.5f){
+LevelMap::LevelMap(size_t length, Constants& c, Player& p) : constants(c), player(p), selectRectCentre(sf::Vector2f(), 0.5f){
     std::mt19937_64 rand;
     {
         std::random_device dev;
@@ -84,7 +84,7 @@ void LevelMap::receiveInput(const sf::Event& event){
 
 bool LevelMap::getSelectedLevel(Wordle& level){
     if (!start_level){return false;}
-    new (&level) Wordle(constants, 7-currentLayer);
+    new (&level) Wordle(constants, player, 7-currentLayer);
     start_level = false;
     start_level_input = false;
     return true;
