@@ -2,7 +2,9 @@
 
 #include <vector>
 #include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 #include <random>
+#include "layout.h"
 
 
 enum LetterStates{
@@ -15,7 +17,7 @@ struct Wordle{
 public:
 	Wordle();
 
-	void enterChar(wchar_t);
+	void receiveInput(const sf::Event&);
 
 	void update();
 	void render(sf::RenderTarget* target);
@@ -30,7 +32,15 @@ private:
 	
 	sf::Font monospace;
 	
-	static constexpr int MAX_GUESSES = 6;
+	Layout::Layout layout;
+	
+	static constexpr int MAX_GUESSES = 7;
 	
 	std::vector<LetterStates> getLetterStates(std::wstring userInput);
+	
+	void makeLayout();
+	void loadWords();
+	
+	void makeCharLayoutRow();
+	std::wstring getRandomWord(int length);
 };

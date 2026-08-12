@@ -1,23 +1,17 @@
 #include "wordle.h"
 #include <SFML/Graphics.hpp>
 
-namespace Brot{
-	int foo(int a){
-		return a + 1;
-	}
-}
 
 #ifdef _WIN32
 #include <direct.h>
-#define chdir _chdir
-#else
-#define chdir (void)
 #endif
 
 int main(){
 #ifdef _WIN32
-	chdir("../../..");
+	_chdir("../../..");
 #endif
+	std::setlocale(LC_ALL, "de_CH.iso88591");
+
 	sf::VideoMode videoMode = sf::VideoMode(sf::Vector2u{800, 800});
 	sf::RenderWindow window = sf::RenderWindow(videoMode, "wordle at home");
 	std::optional<sf::Event> windowEvent;
@@ -32,9 +26,8 @@ int main(){
 			if (windowEvent.value().is<sf::Event::Closed>()) {
 				window.close();
 			}
-			if (windowEvent.value().is<sf::Event::TextEntered>()){
-				const sf::Event::TextEntered* keyEv = windowEvent.value().getIf<sf::Event::TextEntered>();
-				game.enterChar(keyEv->unicode);
+			else {
+				game.receiveInput(windowEvent.value());
 			}
 			windowEvent = window.pollEvent();
 		}
