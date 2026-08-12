@@ -19,9 +19,14 @@ public:
 	
 	bool getSelectedLevel(Wordle& level);
 	
-	enum LocationType{
+	enum class LocationType{
+	    NONE,
 	    WORDLE,
-	    NONE
+	};
+	
+	enum class EdgeType{
+		NONE,
+		SHOP
 	};
 	
 	struct Node{
