@@ -1,6 +1,7 @@
 #include "constants.h"
 #include <fstream>
 #include <list>
+#include <algorithm>
 
 struct Node{
 	std::unordered_map<wchar_t, Node*> children;
