@@ -41,10 +41,17 @@ void Wordle::update(){
     	}
     	if (done){
     		playerWon = true;
-			player.money += 10 + 2 * player.upgrades.count(MONEY_END);
+			player.money += (10 + 2 * player.upgrades.count(MONEY_END)) * (1 + player.upgrades.count(MONEY_MULTIPLIER));
     	}
     	else if (userInputHistory.size() == MAX_GUESSES){
-    		exit(1);
+			if (player.upgrades.count(INVINCIBILITY)) {
+				playerWon = true;
+				player.money += (10 + 2 * player.upgrades.count(MONEY_END)) * (1 + player.upgrades.count(MONEY_MULTIPLIER));
+				player.upgrades.erase(player.upgrades.find(INVINCIBILITY));
+			}
+			else {
+				exit(1);
+			}
     	}
     	
     	makeCharLayoutRow();
