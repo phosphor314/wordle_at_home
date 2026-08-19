@@ -19,14 +19,25 @@ public:
 	
 	bool getSelectedLevel(Wordle& level);
 	
-	enum LocationType{
+	enum class LocationType{
+	    NONE,
 	    WORDLE,
-	    NONE
+	};
+	
+	enum class EdgeType{
+		NONE,
+		SHOP
+	};
+	
+	struct Edge{
+		EdgeType type;
+		size_t target;
+		size_t elemIdx;
 	};
 	
 	struct Node{
 	    LocationType type;
-	    std::vector<size_t> children;
+	    std::vector<Edge> children;
 	    size_t elemIdx;
 	};
 

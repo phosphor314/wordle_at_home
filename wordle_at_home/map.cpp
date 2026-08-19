@@ -1,4 +1,6 @@
 #include "map.h"
+#include "SFML/Graphics/Rect.hpp"
+#include <iostream>
 #include <random>
 #include <algorithm>
 
@@ -13,26 +15,26 @@ LevelMap::LevelMap(size_t length, Constants& c, Player& p) : constants(c), playe
     constexpr size_t MAX_WIDTH = 4;
     constexpr size_t MIN_WIDTH = 1;
     
-    map.push_back({{NONE, {}, 0}});
+    map.push_back({{LocationType::NONE, {}, 0}});
     
     size_t counter = 1;
     for (size_t i=1; i < length; ++i){
         size_t layerWidth = std::uniform_int_distribution(MIN_WIDTH, MAX_WIDTH)(rand);
         map.push_back({});
         for (size_t j=0; j < layerWidth; ++j){
-            map[i].push_back({WORDLE, {}, counter});
+            map[i].push_back({LocationType::WORDLE, {}, counter});
             ++counter;
         }
         std::vector<char> noParent(layerWidth);
         std::fill(noParent.begin(), noParent.end(), true);
         for (size_t j=0; j < map[i-1].size(); ++j){
             size_t child = std::uniform_int_distribution<size_t>(0, layerWidth-1)(rand);
-            map[i-1][j].children.push_back(child);
+            map[i-1][j].children.emplace_back(EdgeType::NONE, child);
             noParent[child] = false;
         }
         for (size_t j=0; j < layerWidth; ++j){
             if (noParent[j]){
-                map[i-1][std::uniform_int_distribution<size_t>(0, map[i-1].size()-1)(rand)].children.push_back(j);
+                map[i-1][std::uniform_int_distribution<size_t>(0, map[i-1].size()-1)(rand)].children.emplace_back(EdgeType::SHOP, j);
             }
         }
     }
@@ -50,7 +52,7 @@ void LevelMap::update(){
     if (
         start_level_input && 
         selectedLayer == currentLayer + 1 && 
-        std::any_of(map[currentLayer][currentNode].children.begin(), map[currentLayer][currentNode].children.end(), [this](const size_t& x){return x==selectedNode;})){
+        std::any_of(map[currentLayer][currentNode].children.begin(), map[currentLayer][currentNode].children.end(), [this](const auto& x){return x.target==selectedNode;})){
 			start_level = true;
 			currentNode = selectedNode;
 			currentLayer = selectedLayer;
@@ -92,8 +94,9 @@ bool LevelMap::getSelectedLevel(Wordle& level){
 
 void LevelMap::makeLayout(){
     constexpr float TILE_SIZE = 0.8/7;
+    constexpr float EDGE_TILE_SIZE = 0.6/7;
     constexpr float TILE_PADDING = 0.2/7;
-    constexpr float LAYER_SEPARATION = 0.4/7;
+    constexpr float LAYER_SEPARATION = 0.6/7;
     
     layout.subdivideContainer(0, 0.75f, Layout::VERTICAL);
     layout.subdivideContainer(0);
@@ -106,6 +109,21 @@ void LevelMap::makeLayout(){
                 sf::Vector2f((LAYER_SEPARATION+TILE_SIZE)*i, j*(TILE_SIZE+TILE_PADDING)) + offset,
                 sf::Vector2f(TILE_SIZE, TILE_SIZE)
             });
+        }
+    }
+    
+    for (size_t i=0; i < map.size()-1; ++i){
+        for (size_t j=0; j < map[i].size(); ++j){
+            for (auto& k : map[i][j].children){
+                sf::Vector2f posA = layout.getElement(map[i][j].elemIdx, MAP_LAYOUT_CONTAINER).pos;
+                sf::Vector2f posB = layout.getElement(map[i+1][k.target].elemIdx, MAP_LAYOUT_CONTAINER).pos;
+                k.elemIdx = layout.getNextElementIdx(MAP_LAYOUT_CONTAINER);
+                layout.addElement({
+                    MAP_LAYOUT_CONTAINER,
+                    (posA + posB) * 0.5f,
+                    sf::Vector2f(EDGE_TILE_SIZE, EDGE_TILE_SIZE)
+                });
+            }
         }
     }
 }
@@ -134,7 +152,7 @@ void LevelMap::renderMap(sf::RenderTarget* target){
             }
             
             switch (map[l][n].type){
-                case WORDLE:
+                case LocationType::WORDLE:
                 {
                 	sf::Text text(constants.MONOSPACE_FONT);
                 	text.setString("W");
@@ -150,7 +168,8 @@ void LevelMap::renderMap(sf::RenderTarget* target){
             
             target->draw(rect);
             
-            for (size_t ind : map[l][n].children){
+            for (const auto& c : map[l][n].children){
+                size_t ind = c.target;
                 sf::Vertex vert;
                 vert.color = sf::Color::White;
                 vert.position = elemBounds.getCenter() + 0.5f*sf::Vector2f(elemBounds.size.x, 0.0f);
@@ -158,6 +177,16 @@ void LevelMap::renderMap(sf::RenderTarget* target){
                 sf::FloatRect nElemBounds = layout.getElementBounds(map[l+1][ind].elemIdx, MAP_LAYOUT_CONTAINER);
                 vert.position = nElemBounds.getCenter() - 0.5f*sf::Vector2f(nElemBounds.size.x, 0.0f);
                 vArray.append(vert);
+                
+                if (c.type == EdgeType::SHOP){
+                    sf::RectangleShape edgeRect;
+                    edgeRect.setSize(layout.getElementBounds(c.elemIdx, MAP_LAYOUT_CONTAINER).size);
+                    edgeRect.setPosition(layout.getElementBounds(c.elemIdx, MAP_LAYOUT_CONTAINER).position);
+                    edgeRect.setFillColor(sf::Color::Transparent);
+                    edgeRect.setOutlineThickness(2.0f);
+                    edgeRect.setOutlineColor(sf::Color::White);
+                    target->draw(edgeRect);
+                }
             }
         }
     }
@@ -177,10 +206,10 @@ void LevelMap::renderMap(sf::RenderTarget* target){
 void LevelMap::renderSelectedTileInfo(sf::RenderTarget* target){
     sf::Text text(constants.MONOSPACE_FONT);
     switch (map[selectedLayer][selectedNode].type){
-        case NONE:
+        case LocationType::NONE:
 			text.setString("Hier ist nichts");
 			break;
-		case WORDLE:
+		case LocationType::WORDLE:
 			text.setString("Wordle, nichts spezielles");
     		break;
     }
