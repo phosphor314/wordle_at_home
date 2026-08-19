@@ -86,6 +86,35 @@ sf::FloatRect Layout::Layout::getElementBounds(size_t elementInd, size_t contain
     return sf::FloatRect(e->pos*parentBounds.size.x + parentBounds.position, e->extent*parentBounds.size.x);
 }
 
+Layout::Element& Layout::Layout::getElement(size_t elementInd, size_t containerInd){
+    Element* e = nullptr;
+    size_t counter = 0;
+    for (Element& elem : elements){
+        if (elem.containerInd == containerInd){
+            if (counter == elementInd){
+                e = &elem;
+                break;
+            }
+            ++counter;
+        }
+    }
+    
+    assert(e);
+    
+    return *e;
+}
+
+size_t Layout::Layout::getNextElementIdx(size_t container){
+    size_t counter = 0;
+    for (const Element& elem : elements){
+        if (elem.containerInd == container){
+            ++counter;
+        }
+    }
+    
+    return counter;
+}
+
 void Layout::Layout::subdivideContainer(size_t container, float divisionParam, DivisionType divType){
 	containers[container].children.emplace_back(containers.size());
 	if (divType != NONE){

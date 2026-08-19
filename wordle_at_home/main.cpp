@@ -12,15 +12,15 @@ int main(){
 	_chdir("../../..");
 #endif
 	std::setlocale(LC_ALL, "de_CH.iso88591");
+	Constants constants;
+	Player player;
+
+	LevelMap levelMap(5, constants, player);
 
 	sf::VideoMode videoMode = sf::VideoMode(sf::Vector2u{800, 800});
 	sf::RenderWindow window = sf::RenderWindow(videoMode, "wordle at home");
 	std::optional<sf::Event> windowEvent;
 	
-	Constants constants;
-	Player player;
-
-	LevelMap levelMap(5, constants, player);
 	Wordle wordle(constants, player);
 	bool inLevelMap = true;
 	
