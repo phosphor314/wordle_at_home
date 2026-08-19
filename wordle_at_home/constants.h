@@ -10,3 +10,4 @@ struct Constants{
     sf::Font MONOSPACE_FONT = sf::Font("SpaceMono-Regular.ttf");
 	std::vector<std::wstring> words;
 };
+

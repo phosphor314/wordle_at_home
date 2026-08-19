@@ -19,7 +19,11 @@ void UI::renderUpgradeBar(sf::RenderTarget* target, Constants& constants, Player
 	target->draw(bg);
 
 	// Upgrade labels
-	std::array<std::wstring,5> labels = {L"+1 Versuch", L"Endgeld", L"X-Wort", L"Geldx", L"Unverwundb."};
+	std::vector<std::string> labels;
+	for (auto& u : player.upgrades) {
+		labels.push_back(GET_UPGRADE_NAME(u));
+	}
+	
 
 	size_t upgradeCount = labels.size();
 	float padding = 6.0f;
@@ -32,20 +36,11 @@ void UI::renderUpgradeBar(sf::RenderTarget* target, Constants& constants, Player
 
 		sf::RectangleShape slot(sf::Vector2f(slotW, slotH));
 		slot.setPosition(sf::Vector2f(x, y));
-		bool owned = false;
-		switch (i){
-			case 0: owned = player.upgrades.count(ADD_ATTEMPT); break;
-			case 1: owned = player.upgrades.count(MONEY_END); break;
-			case 2: owned = player.upgrades.count(X_WORD); break;
-			case 3: owned = player.upgrades.count(MONEY_MULTIPLIER); break;
-			case 4: owned = player.upgrades.count(INVINCIBILITY); break;
-		}
-		if (owned){
-			slot.setFillColor(sf::Color(50, 150, 50, 220));
-		}
-		else{
-			slot.setFillColor(sf::Color(80, 80, 80, 200));
-		}
+		
+	
+		slot.setFillColor(sf::Color(50, 150, 50, 220));
+		
+
 		slot.setOutlineColor(sf::Color::White);
 		slot.setOutlineThickness(1.0f);
 		target->draw(slot);
