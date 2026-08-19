@@ -1,5 +1,6 @@
 #include "map.h"
 #include "SFML/Graphics/Rect.hpp"
+#include "ui.h"
 #include <iostream>
 #include <random>
 #include <algorithm>
@@ -46,6 +47,7 @@ void LevelMap::render(sf::RenderTarget* target){
     layout.bounds = sf::FloatRect(target->getViewport(target->getView()));
     renderMap(target);
     renderSelectedTileInfo(target);
+    UI::renderUpgradeBar(target, constants, player, layout);
 }
 
 void LevelMap::update(){

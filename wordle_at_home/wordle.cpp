@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <list>
 #include <cwctype>
+#include "ui.h"
 
 
 Wordle::Wordle(Constants& c, Player& p) : constants(c), player(p) {}
@@ -201,6 +202,8 @@ void Wordle::render(sf::RenderTarget* target){
 		rect.setOutlineThickness(1.0f);
 		target->draw(rect);
 	}
+
+	UI::renderUpgradeBar(target, constants, player, layout);
 }
 
 bool Wordle::getPlayerWon(){
