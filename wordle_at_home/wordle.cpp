@@ -15,7 +15,7 @@ Wordle::Wordle(Constants& c, Player& p, size_t wordLength) : constants(c), playe
 	std::random_device rd;
 	randomState = std::mt19937_64(rd());
 	this->wordLength = wordLength;
-	MAX_GUESSES = 6 + player.upgrades.count(ADD_ATTEMPT);
+	MAX_GUESSES = 6 + player.upgrades.count(ADD_ATTEMPT) + player.upgrades.count(REVEAL_YELLOW);
 
 	
 	makeLayout();
@@ -24,6 +24,14 @@ Wordle::Wordle(Constants& c, Player& p, size_t wordLength) : constants(c), playe
 void Wordle::update(){
     if (currentWord == L""){
     	currentWord = getRandomWord(wordLength);
+		if (player.upgrades.count(REVEAL_YELLOW)) {
+			std::uniform_int_distribution<int> dist(0, currentWord.size() - 1);
+			wchar_t revealChar = currentWord[dist(randomState)];
+			std::wstring yellowWord;
+			yellowWord.resize(currentWord.size(), L'_');
+			yellowWord[dist(randomState)] = revealChar;
+			userInputHistory.push_back(yellowWord);
+		}
     	std::wcout << currentWord << L"\n";
     	
     	makeCharLayoutRow();
@@ -43,6 +51,9 @@ void Wordle::update(){
     	if (done){
     		playerWon = true;
 			player.money += (10 + 2 * player.upgrades.count(MONEY_END)) * (1 + player.upgrades.count(MONEY_MULTIPLIER));
+			if (player.upgrades.count(SECOND_WORD_MULT) && userInputHistory.size() == 2) {
+				player.money *= 2;
+			}
     	}
     	else if (userInputHistory.size() == MAX_GUESSES){
 			if (player.upgrades.count(INVINCIBILITY)) {
