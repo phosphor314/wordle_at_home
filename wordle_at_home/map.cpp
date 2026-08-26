@@ -86,9 +86,17 @@ void LevelMap::receiveInput(const sf::Event& event){
     }
 }
 
-bool LevelMap::getSelectedLevel(Wordle& level){
+bool LevelMap::getSelectedLevel(LevelInfo& level){
     if (!start_level){return false;}
-    new (&level) Wordle(constants, player, 7-currentLayer);
+    if (invokeShop){
+        level.type = LevelType::SHOP;
+        new (&level.shop) Shop(constants, player);
+        invokeShop = false;
+    }
+    else {
+        level.type = LevelType::WORDLE;
+    	new (&level.wordle) Wordle(constants, player, 7-currentLayer);
+    }
     start_level = false;
     start_level_input = false;
     return true;

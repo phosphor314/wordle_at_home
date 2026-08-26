@@ -6,7 +6,21 @@
 #include <SFML/Graphics.hpp>
 #include "interpolate.hpp"
 #include "wordle.h"
+#include "shop.h"
 
+
+enum class LevelType{
+	WORDLE,
+	SHOP,
+};
+
+struct LevelInfo{
+	LevelType type;
+	union {
+		Wordle wordle;
+		Shop shop;
+	};
+};
 
 struct LevelMap{
 public:
@@ -17,7 +31,7 @@ public:
 	
 	void receiveInput(const sf::Event&);
 	
-	bool getSelectedLevel(Wordle& level);
+	bool getSelectedLevel(LevelInfo& level);
 	
 	enum class LocationType{
 	    NONE,
@@ -53,6 +67,7 @@ private:
 	int currentLayer = 0;
 	bool start_level_input = false;
 	bool start_level = false;
+	bool invokeShop = false;
 	Interpolated<sf::Vector2f, easingFuns::EaseOutExpo> selectRectCentre;
 	
 	Constants& constants;
