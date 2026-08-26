@@ -8,7 +8,7 @@ void UI::renderUpgradeBar(sf::RenderTarget* target, Constants& constants, Player
 	sf::FloatRect bounds = layout.getContainerBounds(0);
 
 	float barHeight = std::floor(bounds.size.y * 0.08f);
-	sf::FloatRect barRect(sf::Vector2f(bounds.position.x + 8.0f, bounds.position.y + 8.0f), sf::Vector2f(bounds.size.x - 16.0f, barHeight - 8.0f));
+	sf::FloatRect barRect(sf::Vector2f(bounds.position.x + 8.0f, bounds.position.y + bounds.size.y - barHeight), sf::Vector2f(bounds.size.x - 16.0f, barHeight - 8.0f));
 
 	// Background
 	sf::RectangleShape bg(sf::Vector2f(barRect.size.x, barRect.size.y));

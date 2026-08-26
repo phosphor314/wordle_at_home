@@ -19,6 +19,6 @@ std::string GET_UPGRADE_NAME(Upgrades u);
 
 struct Player{
 	// Upgrades that the player has unlocked
-	std::unordered_multiset<Upgrades> upgrades = { ADD_ATTEMPT, MONEY_MULTIPLIER, INVINCIBILITY };
+	std::unordered_multiset<Upgrades> upgrades;
 	size_t money = 0; 
 };
