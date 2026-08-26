@@ -6,6 +6,5 @@
 #include "layout.h"
 
 namespace UI {
-	// Render a horizontal upgrade bar at the top of the layout bounds.
 	void renderUpgradeBar(sf::RenderTarget* target, Constants& constants, Player& player, Layout::Layout& layout);
 }
