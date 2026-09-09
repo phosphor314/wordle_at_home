@@ -1,52 +1,47 @@
 #pragma once
 
-#include <vector>
+#include "constants.h"
+#include "layout.h"
+#include "player.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <random>
-#include "layout.h"
-#include "constants.h"
-#include "player.h"
+#include <vector>
 
+enum LetterStates { DOES_NOT_EXIST, EXISTS, AT_RIGHT_POSITION };
 
-enum LetterStates{
-    DOES_NOT_EXIST,
-    EXISTS,
-    AT_RIGHT_POSITION
-};
-
-struct Wordle{
+struct Wordle {
 public:
-	Wordle(Constants&, Player&);
-	Wordle(Constants&, Player&, size_t wordlength);
+  Wordle(Constants &, Player &);
+  Wordle(Constants &, Player &, size_t wordlength);
 
-	void receiveInput(const sf::Event&);
+  void receiveInput(const sf::Event &);
 
-	void update();
-	void render(sf::RenderTarget* target);
-	
-	bool getPlayerWon();
-	
+  void update();
+  void render(sf::RenderTarget *target);
+
+  bool getPlayerWon();
+
 private:
-	std::mt19937_64 randomState;
+  std::mt19937_64 randomState;
 
-	std::wstring currentWord = L"";
-	std::wstring currentUserInput;
-	std::vector<std::wstring> userInputHistory;
-	bool playerWon = false;
-	size_t wordLength;
-	
-	Constants& constants;
-	Player& player;
-	
-	Layout::Layout layout;
-	
-	int MAX_GUESSES = 6;
-	
-	std::vector<LetterStates> getLetterStates(std::wstring userInput);
-	
-	void makeLayout();
-	
-	void makeCharLayoutRow();
-	std::wstring getRandomWord(int length);
+  std::wstring currentWord = L"";
+  std::wstring currentUserInput;
+  std::vector<std::wstring> userInputHistory;
+  bool playerWon = false;
+  size_t wordLength;
+
+  Constants &constants;
+  Player &player;
+
+  Layout::Layout layout;
+
+  int MAX_GUESSES = 6;
+
+  std::vector<LetterStates> getLetterStates(std::wstring userInput);
+
+  void makeLayout();
+
+  void makeCharLayoutRow();
+  std::wstring getRandomWord(int length);
 };

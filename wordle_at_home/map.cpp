@@ -1,251 +1,278 @@
 #include "map.h"
 #include "SFML/Graphics/Rect.hpp"
 #include "ui.h"
+#include <algorithm>
 #include <iostream>
 #include <random>
-#include <algorithm>
 
+LevelInfo::LevelInfo() {}
 
-LevelMap::LevelMap(size_t length, Constants& c, Player& p) : constants(c), player(p), selectRectCentre(sf::Vector2f(), 0.5f){
-    std::mt19937_64 rand;
-    {
-        std::random_device dev;
-    	rand.seed(dev());
+LevelInfo::~LevelInfo() {}
+
+LevelMap::LevelMap(size_t length, Constants &c, Player &p)
+    : constants(c), player(p), selectRectCentre(sf::Vector2f(), 0.5f) {
+  std::mt19937_64 rand;
+  {
+    std::random_device dev;
+    rand.seed(dev());
+  }
+
+  constexpr size_t MAX_WIDTH = 4;
+  constexpr size_t MIN_WIDTH = 1;
+
+  map.push_back({{LocationType::NONE, {}, 0}});
+
+  size_t counter = 1;
+  for (size_t i = 1; i < length; ++i) {
+    size_t layerWidth =
+        std::uniform_int_distribution(MIN_WIDTH, MAX_WIDTH)(rand);
+    map.push_back({});
+    for (size_t j = 0; j < layerWidth; ++j) {
+      map[i].push_back({LocationType::WORDLE, {}, counter});
+      ++counter;
     }
-    
-    constexpr size_t MAX_WIDTH = 4;
-    constexpr size_t MIN_WIDTH = 1;
-    
-    map.push_back({{LocationType::NONE, {}, 0}});
-    
-    size_t counter = 1;
-    for (size_t i=1; i < length; ++i){
-        size_t layerWidth = std::uniform_int_distribution(MIN_WIDTH, MAX_WIDTH)(rand);
-        map.push_back({});
-        for (size_t j=0; j < layerWidth; ++j){
-            map[i].push_back({LocationType::WORDLE, {}, counter});
-            ++counter;
-        }
-        std::vector<char> noParent(layerWidth);
-        std::fill(noParent.begin(), noParent.end(), true);
-        for (size_t j=0; j < map[i-1].size(); ++j){
-            size_t child = std::uniform_int_distribution<size_t>(0, layerWidth-1)(rand);
-            map[i-1][j].children.emplace_back(EdgeType::NONE, child);
-            noParent[child] = false;
-        }
-        for (size_t j=0; j < layerWidth; ++j){
-            if (noParent[j]){
-                map[i-1][std::uniform_int_distribution<size_t>(0, map[i-1].size()-1)(rand)].children.emplace_back(EdgeType::SHOP, j);
-            }
-        }
+    std::vector<char> noParent(layerWidth);
+    std::fill(noParent.begin(), noParent.end(), true);
+    for (size_t j = 0; j < map[i - 1].size(); ++j) {
+      size_t child =
+          std::uniform_int_distribution<size_t>(0, layerWidth - 1)(rand);
+      map[i - 1][j].children.emplace_back(EdgeType::NONE, child);
+      noParent[child] = false;
     }
-    
-    makeLayout();
+    for (size_t j = 0; j < layerWidth; ++j) {
+      if (noParent[j]) {
+        map[i - 1][std::uniform_int_distribution<size_t>(0, map[i - 1].size() -
+                                                                1)(rand)]
+            .children.emplace_back(EdgeType::SHOP, j);
+      }
+    }
+  }
+
+  makeLayout();
 }
 
-void LevelMap::render(sf::RenderTarget* target){
-    layout.bounds = sf::FloatRect(target->getViewport(target->getView()));
-    renderMap(target);
-    renderSelectedTileInfo(target);
-    UI::renderUpgradeBar(target, constants, player, layout);
+void LevelMap::render(sf::RenderTarget *target) {
+  layout.bounds = sf::FloatRect(target->getViewport(target->getView()));
+  renderMap(target);
+  renderSelectedTileInfo(target);
+  UI::renderUpgradeBar(target, constants, player, layout);
 }
 
-void LevelMap::update(){
-    if (
-        start_level_input && 
-        selectedLayer == currentLayer + 1 && 
-        std::any_of(map[currentLayer][currentNode].children.begin(), map[currentLayer][currentNode].children.end(), [this](const auto& x){return x.target==selectedNode;})){
-			start_level = true;
-			currentNode = selectedNode;
-			currentLayer = selectedLayer;
+void LevelMap::update() {
+  if (start_level_input && selectedLayer == currentLayer + 1 &&
+      std::any_of(map[currentLayer][currentNode].children.begin(),
+                  map[currentLayer][currentNode].children.end(),
+                  [this](const auto &x) { return x.target == selectedNode; })) {
+    if ((*std::find_if(
+             map[currentLayer][currentNode].children.begin(),
+             map[currentLayer][currentNode].children.end(),
+             [this](const auto &x) { return x.target == selectedNode; }))
+            .type == EdgeType::SHOP) {
+      invokeShop = true;
+      start_level = true;
+    } else {
+      start_level = true;
     }
-    start_level_input = false;
+    currentNode = selectedNode;
+    currentLayer = selectedLayer;
+  }
+  start_level_input = false;
 }
 
-void LevelMap::receiveInput(const sf::Event& event){
-    if (event.is<sf::Event::KeyPressed>()){
-        const sf::Event::KeyPressed& keyEv = *event.getIf<sf::Event::KeyPressed>();
-        if (keyEv.code == sf::Keyboard::Key::Up){
-            --selectedNode;
-        }
-        else if (keyEv.code == sf::Keyboard::Key::Down){
-            ++selectedNode;
-        }
-        else if (keyEv.code == sf::Keyboard::Key::Right){
-            ++selectedLayer;
-        }
-        else if (keyEv.code == sf::Keyboard::Key::Left){
-            --selectedLayer;
-        }
-        else if (keyEv.code == sf::Keyboard::Key::Enter){
-            start_level_input = true;
-        }
-        
-        selectedLayer = std::clamp(selectedLayer, 0, (int)map.size()-1);
-        selectedNode = std::clamp(selectedNode, 0, (int)map[selectedLayer].size()-1);
+void LevelMap::receiveInput(const sf::Event &event) {
+  if (event.is<sf::Event::KeyPressed>()) {
+    const sf::Event::KeyPressed &keyEv = *event.getIf<sf::Event::KeyPressed>();
+    if (keyEv.code == sf::Keyboard::Key::Up) {
+      --selectedNode;
+    } else if (keyEv.code == sf::Keyboard::Key::Down) {
+      ++selectedNode;
+    } else if (keyEv.code == sf::Keyboard::Key::Right) {
+      ++selectedLayer;
+    } else if (keyEv.code == sf::Keyboard::Key::Left) {
+      --selectedLayer;
+    } else if (keyEv.code == sf::Keyboard::Key::Enter) {
+      start_level_input = true;
     }
+
+    selectedLayer = std::clamp(selectedLayer, 0, (int)map.size() - 1);
+    selectedNode =
+        std::clamp(selectedNode, 0, (int)map[selectedLayer].size() - 1);
+  }
 }
 
-bool LevelMap::getSelectedLevel(LevelInfo& level){
-    if (!start_level){return false;}
-    if (invokeShop){
-        level.type = LevelType::SHOP;
-        new (&level.shop) Shop(constants, player);
-        invokeShop = false;
-    }
-    else {
-        level.type = LevelType::WORDLE;
-    	new (&level.wordle) Wordle(constants, player, 7-currentLayer);
-    }
-    start_level = false;
-    start_level_input = false;
-    return true;
+bool LevelMap::getSelectedLevel(LevelInfo &level) {
+  if (!start_level) {
+    return false;
+  }
+  if (invokeShop) {
+    level.type = LevelType::SHOP;
+    new (&level.shop) Shop(constants, player);
+    invokeShop = false;
+  } else {
+    level.type = LevelType::WORDLE;
+    new (&level.wordle) Wordle(constants, player, 7 - currentLayer);
+  }
+  start_level = false;
+  start_level_input = false;
+  return true;
 }
 
-void LevelMap::makeLayout(){
-    constexpr float TILE_SIZE = 0.8/7;
-    constexpr float EDGE_TILE_SIZE = 0.6/7;
-    constexpr float TILE_PADDING = 0.2/7;
-    constexpr float LAYER_SEPARATION = 0.6/7;
-    
-    layout.subdivideContainer(0, 0.75f, Layout::VERTICAL);
-    layout.subdivideContainer(0);
-    
-    for (size_t i=0; i < map.size(); ++i){
-        sf::Vector2f offset((1.0f-map.size()*(LAYER_SEPARATION+TILE_SIZE))*0.5f, (TILE_PADDING+1.0f-map[i].size()*(TILE_SIZE+TILE_PADDING))*0.5f);
-        for (size_t j=0; j < map[i].size(); ++j){
-            layout.addElement({
-                MAP_LAYOUT_CONTAINER,
-                sf::Vector2f((LAYER_SEPARATION+TILE_SIZE)*i, j*(TILE_SIZE+TILE_PADDING)) + offset,
-                sf::Vector2f(TILE_SIZE, TILE_SIZE)
-            });
-        }
+void LevelMap::makeLayout() {
+  constexpr float TILE_SIZE = 0.8 / 7;
+  constexpr float EDGE_TILE_SIZE = 0.6 / 7;
+  constexpr float TILE_PADDING = 0.2 / 7;
+  constexpr float LAYER_SEPARATION = 0.6 / 7;
+
+  layout.subdivideContainer(0, 0.75f, Layout::VERTICAL);
+  layout.subdivideContainer(0);
+
+  for (size_t i = 0; i < map.size(); ++i) {
+    sf::Vector2f offset(
+        (1.0f - map.size() * (LAYER_SEPARATION + TILE_SIZE)) * 0.5f,
+        (TILE_PADDING + 1.0f - map[i].size() * (TILE_SIZE + TILE_PADDING)) *
+            0.5f);
+    for (size_t j = 0; j < map[i].size(); ++j) {
+      layout.addElement({MAP_LAYOUT_CONTAINER,
+                         sf::Vector2f((LAYER_SEPARATION + TILE_SIZE) * i,
+                                      j * (TILE_SIZE + TILE_PADDING)) +
+                             offset,
+                         sf::Vector2f(TILE_SIZE, TILE_SIZE)});
     }
-    
-    for (size_t i=0; i < map.size()-1; ++i){
-        for (size_t j=0; j < map[i].size(); ++j){
-            for (auto& k : map[i][j].children){
-                sf::Vector2f posA = layout.getElement(map[i][j].elemIdx, MAP_LAYOUT_CONTAINER).pos;
-                sf::Vector2f posB = layout.getElement(map[i+1][k.target].elemIdx, MAP_LAYOUT_CONTAINER).pos;
-                k.elemIdx = layout.getNextElementIdx(MAP_LAYOUT_CONTAINER);
-                layout.addElement({
-                    MAP_LAYOUT_CONTAINER,
-                    (posA + posB) * 0.5f,
-                    sf::Vector2f(EDGE_TILE_SIZE, EDGE_TILE_SIZE)
-                });
-            }
-        }
+  }
+
+  for (size_t i = 0; i < map.size() - 1; ++i) {
+    for (size_t j = 0; j < map[i].size(); ++j) {
+      for (auto &k : map[i][j].children) {
+        sf::Vector2f posA =
+            layout.getElement(map[i][j].elemIdx, MAP_LAYOUT_CONTAINER).pos;
+        sf::Vector2f posB =
+            layout
+                .getElement(map[i + 1][k.target].elemIdx, MAP_LAYOUT_CONTAINER)
+                .pos;
+        k.elemIdx = layout.getNextElementIdx(MAP_LAYOUT_CONTAINER);
+        layout.addElement({MAP_LAYOUT_CONTAINER, (posA + posB) * 0.5f,
+                           sf::Vector2f(EDGE_TILE_SIZE, EDGE_TILE_SIZE)});
+      }
     }
+  }
 }
 
-void LevelMap::renderMap(sf::RenderTarget* target){
-    sf::VertexArray vArray;
-    vArray.setPrimitiveType(sf::PrimitiveType::Lines);
-    
-    for (size_t l=0; l < map.size(); ++l){
-        for (size_t n=0; n < map[l].size(); ++n){
-            sf::RectangleShape rect;
-            sf::FloatRect elemBounds = layout.getElementBounds(map[l][n].elemIdx, MAP_LAYOUT_CONTAINER);
-            rect.setSize(elemBounds.size);
-            rect.setPosition(elemBounds.position);
-            rect.setFillColor(sf::Color::Transparent);
-            rect.setOutlineColor(sf::Color::White);
-            rect.setOutlineThickness(1.0f);
-            if (l == selectedLayer && n == selectedNode){
-                selectRectCentre.setTarget(elemBounds.getCenter());
-                if ((sf::Vector2f)selectRectCentre == sf::Vector2f()){
-                    selectRectCentre.forceSet(selectRectCentre);
-                }
-            }
-            if (l == currentLayer && n == currentNode){
-                rect.setOutlineThickness(8.0f);
-            }
-            
-            switch (map[l][n].type){
-                case LocationType::WORDLE:
-                {
-                	sf::Text text(constants.MONOSPACE_FONT);
-                	text.setString("W");
-                	text.setCharacterSize(elemBounds.size.y*text.getCharacterSize() / text.getLocalBounds().size.y*0.8f);
-                	text.setOrigin(text.getLocalBounds().getCenter());
-                	text.setPosition(elemBounds.getCenter());
-                	text.setFillColor(sf::Color(128, 128, 128, 128));
-                	target->draw(text);
-                } 
-                	break;
-                default: break;
-            }
-            
-            target->draw(rect);
-            
-            for (const auto& c : map[l][n].children){
-                size_t ind = c.target;
-                sf::Vertex vert;
-                vert.color = sf::Color::White;
-                vert.position = elemBounds.getCenter() + 0.5f*sf::Vector2f(elemBounds.size.x, 0.0f);
-                vArray.append(vert);
-                sf::FloatRect nElemBounds = layout.getElementBounds(map[l+1][ind].elemIdx, MAP_LAYOUT_CONTAINER);
-                vert.position = nElemBounds.getCenter() - 0.5f*sf::Vector2f(nElemBounds.size.x, 0.0f);
-                vArray.append(vert);
-                
-                if (c.type == EdgeType::SHOP){
-                    sf::RectangleShape edgeRect;
-                    edgeRect.setSize(layout.getElementBounds(c.elemIdx, MAP_LAYOUT_CONTAINER).size);
-                    edgeRect.setPosition(layout.getElementBounds(c.elemIdx, MAP_LAYOUT_CONTAINER).position);
-                    edgeRect.setFillColor(sf::Color::Transparent);
-                    edgeRect.setOutlineThickness(2.0f);
-                    edgeRect.setOutlineColor(sf::Color::White);
-                    target->draw(edgeRect);
-                }
-            }
+void LevelMap::renderMap(sf::RenderTarget *target) {
+  sf::VertexArray vArray;
+  vArray.setPrimitiveType(sf::PrimitiveType::Lines);
+
+  for (size_t l = 0; l < map.size(); ++l) {
+    for (size_t n = 0; n < map[l].size(); ++n) {
+      sf::RectangleShape rect;
+      sf::FloatRect elemBounds =
+          layout.getElementBounds(map[l][n].elemIdx, MAP_LAYOUT_CONTAINER);
+      rect.setSize(elemBounds.size);
+      rect.setPosition(elemBounds.position);
+      rect.setFillColor(sf::Color::Transparent);
+      rect.setOutlineColor(sf::Color::White);
+      rect.setOutlineThickness(1.0f);
+      if (l == selectedLayer && n == selectedNode) {
+        selectRectCentre.setTarget(elemBounds.getCenter());
+        if ((sf::Vector2f)selectRectCentre == sf::Vector2f()) {
+          selectRectCentre.forceSet(selectRectCentre);
         }
+      }
+      if (l == currentLayer && n == currentNode) {
+        rect.setOutlineThickness(8.0f);
+      }
+
+      switch (map[l][n].type) {
+      case LocationType::WORDLE: {
+        sf::Text text(constants.MONOSPACE_FONT);
+        text.setString("W");
+        text.setCharacterSize(elemBounds.size.y * text.getCharacterSize() /
+                              text.getLocalBounds().size.y * 0.8f);
+        text.setOrigin(text.getLocalBounds().getCenter());
+        text.setPosition(elemBounds.getCenter());
+        text.setFillColor(sf::Color(128, 128, 128, 128));
+        target->draw(text);
+      } break;
+      default:
+        break;
+      }
+
+      target->draw(rect);
+
+      for (const auto &c : map[l][n].children) {
+        size_t ind = c.target;
+        sf::Vertex vert;
+        vert.color = sf::Color::White;
+        vert.position = elemBounds.getCenter() +
+                        0.5f * sf::Vector2f(elemBounds.size.x, 0.0f);
+        vArray.append(vert);
+        sf::FloatRect nElemBounds = layout.getElementBounds(
+            map[l + 1][ind].elemIdx, MAP_LAYOUT_CONTAINER);
+        vert.position = nElemBounds.getCenter() -
+                        0.5f * sf::Vector2f(nElemBounds.size.x, 0.0f);
+        vArray.append(vert);
+
+        if (c.type == EdgeType::SHOP) {
+          sf::RectangleShape edgeRect;
+          edgeRect.setSize(
+              layout.getElementBounds(c.elemIdx, MAP_LAYOUT_CONTAINER).size);
+          edgeRect.setPosition(
+              layout.getElementBounds(c.elemIdx, MAP_LAYOUT_CONTAINER)
+                  .position);
+          edgeRect.setFillColor(sf::Color::Transparent);
+          edgeRect.setOutlineThickness(2.0f);
+          edgeRect.setOutlineColor(sf::Color::White);
+          target->draw(edgeRect);
+        }
+      }
     }
-    
-    sf::RectangleShape selectRect;
-    selectRect.setSize(layout.getElementBounds(0, MAP_LAYOUT_CONTAINER).size * 1.2f);
-    selectRect.setOrigin(selectRect.getSize()*0.5f);
-    selectRect.setPosition(selectRectCentre);
-    selectRect.setFillColor(sf::Color::Transparent);
-    selectRect.setOutlineColor(sf::Color::Yellow);
-    selectRect.setOutlineThickness(1.0f);
-    target->draw(selectRect);
-    
-    target->draw(vArray);
+  }
+
+  sf::RectangleShape selectRect;
+  selectRect.setSize(layout.getElementBounds(0, MAP_LAYOUT_CONTAINER).size *
+                     1.2f);
+  selectRect.setOrigin(selectRect.getSize() * 0.5f);
+  selectRect.setPosition(selectRectCentre);
+  selectRect.setFillColor(sf::Color::Transparent);
+  selectRect.setOutlineColor(sf::Color::Yellow);
+  selectRect.setOutlineThickness(1.0f);
+  target->draw(selectRect);
+
+  target->draw(vArray);
 }
 
-void LevelMap::renderSelectedTileInfo(sf::RenderTarget* target){
-    sf::Text text(constants.MONOSPACE_FONT);
-    switch (map[selectedLayer][selectedNode].type){
-        case LocationType::NONE:
-			text.setString("Hier ist nichts");
-			break;
-		case LocationType::WORDLE:
-			text.setString("Wordle, nichts spezielles");
-    		break;
+void LevelMap::renderSelectedTileInfo(sf::RenderTarget *target) {
+  sf::Text text(constants.MONOSPACE_FONT);
+  switch (map[selectedLayer][selectedNode].type) {
+  case LocationType::NONE:
+    text.setString("Hier ist nichts");
+    break;
+  case LocationType::WORDLE:
+    text.setString("Wordle, nichts spezielles");
+    break;
+  }
+
+  sf::FloatRect layoutBounds = layout.getContainerBounds(NODE_INFO_CONTAINER);
+  int charWidth = text.getCharacterSize();
+  int currentLineWidth = 0;
+  int lineWidthSinceLastSpace = 0;
+  char *lastSpace = nullptr;
+  std::string str = text.getString();
+  for (char &c : str) {
+    if (c == ' ') {
+      lastSpace = &c;
+      lineWidthSinceLastSpace = 0;
     }
-    
-    sf::FloatRect layoutBounds = layout.getContainerBounds(NODE_INFO_CONTAINER);
-    int charWidth = text.getCharacterSize();
-    int currentLineWidth = 0;
-    int lineWidthSinceLastSpace = 0;
-    char* lastSpace = nullptr;
-    std::string str = text.getString();
-    for (char& c : str){
-        if (c == ' '){
-            lastSpace = &c;
-        		lineWidthSinceLastSpace = 0;
-        }
-        if (currentLineWidth > layoutBounds.size.x){
-            if (lastSpace){
-                *lastSpace = '\n';
-            		currentLineWidth = lineWidthSinceLastSpace;
-            }
-        }
-        currentLineWidth += charWidth;
-        lineWidthSinceLastSpace += charWidth;
+    if (currentLineWidth > layoutBounds.size.x) {
+      if (lastSpace) {
+        *lastSpace = '\n';
+        currentLineWidth = lineWidthSinceLastSpace;
+      }
     }
-    
-    text.setString(str);
-    
-    target->draw(text);
+    currentLineWidth += charWidth;
+    lineWidthSinceLastSpace += charWidth;
+  }
+
+  text.setString(str);
+
+  target->draw(text);
 }
